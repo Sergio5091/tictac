@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - Défie tes amis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Écran de connexion -->
+    <div id="login-screen" class="screen no-scroll">
+        <h1><span class="icon">🎮</span> Tic Tac Toe <span class="icon">🎮</span></h1>
+        <input type="text" id="username-input" placeholder="Ton pseudo" maxlength="15">
+        <button id="login-btn">Commencer</button>
+    </div>
+
+    <!-- Écran d'accueil -->
+    <div id="lobby-screen" class="screen hidden no-scroll">
+        <div class="game-content">
+            <h1>Bienvenue <span id="welcome-username" class="highlight"></span> !</h1>
+            
+            <div class="symbol-section">
+                <div class="symbol-title">Choisis ton symbole :</div>
+                <div class="symbol-choices">
+                    <div class="symbol-btn active" data-symbol="X">X</div>
+                    <div class="symbol-btn" data-symbol="O">O</div>
+                </div>
+            </div>
+            
+            <h2>Mode Multijoueur</h2>
+            <button id="create-game-btn">Créer une partie</button>
+            <button id="join-game-btn">Rejoindre une partie</button>
+            
+            <h2>Mode Solo</h2>
+            <button id="easy-btn" class="btn-small">Facile</button>
+            <button id="medium-btn" class="btn-small">Moyen</button>
+            <button id="hard-btn" class="btn-small">Difficile</button>
+        </div>
+    </div>
+
+    <!-- Écran de configuration -->
+    <div id="config-screen" class="screen hidden">
+        <div class="game-content">
+            <h1>Configuration</h1>
+            
+            <div class="time-section">
+                <div class="symbol-title">Durée de la partie :</div>
+                <div class="time-options">
+                    <button class="btn-time" data-time="2">2 min</button>
+                    <button class="btn-time" data-time="5">5 min</button>
+                    <button class="btn-time" data-time="10">10 min</button>
+                </div>
+            </div>
+            
+            <div id="share-section" class="hidden">
+                <div class="symbol-title">Partager le lien :</div>
+                <div class="share-container">
+                    <input type="text" id="game-link" readonly>
+                    <button id="copy-link"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+            
+            <button id="start-game-btn">Commencer la partie</button>
+            <button id="back-btn" class="btn-small">Retour</button>
+        </div>
+    </div>
+
+    <!-- Écran de jeu -->
+    <div id="game-screen" class="screen hidden">
+        <div class="game-content">
+            <div class="timer-display" id="timer-display">05:00</div>
+            
+            <div class="score-display">
+                <div class="score-item">
+                    <div>Victoires</div>
+                    <div class="score-value" id="player1-score">0</div>
+                </div>
+                <div class="score-item">
+                    <div>Victoires</div>
+                    <div class="score-value" id="player2-score">0</div>
+                </div>
+            </div>
+            
+            <div class="players-display">
+                <div id="player1-display" class="player-display player-x-display">
+                    <div id="player1-name"></div>
+                    <div>(<span id="player1-symbol">X</span>)</div>
+                </div>
+                <div id="player2-display" class="player-display player-o-display">
+                    <div id="player2-name"></div>
+                    <div>(<span id="player2-symbol">O</span>)</div>
+                </div>
+            </div>
+            
+            <div id="turn-indicator">À votre tour !</div>
+            
+            <div id="game-board">
+                <!-- Cases générées par JavaScript -->
+            </div>
+        </div>
+        
+        <div class="game-actions">
+            <button id="restart-btn">Nouveau jeu</button>
+            <button id="quit-btn">Quitter</button>
+        </div>
+    </div>
+
+    <!-- Overlay résultat -->
+    <div id="result-overlay" class="result-overlay hidden">
+        <div class="result-content">
+            <div id="result-title" class="result-title">Résultat</div>
+            <div id="result-message">Message de résultat</div>
+            <button id="continue-btn" class="btn-small">Continuer</button>
+            <button id="final-result-btn" class="btn-small hidden">Terminer</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
