@@ -10,14 +10,14 @@
 </head>
 <body>
     <!-- Écran de connexion -->
-    <div id="login-screen" class="screen no-scroll">
+    <div id="login-screen" class="screen">
         <h1><span class="icon">🎮</span> Tic Tac Toe <span class="icon">🎮</span></h1>
         <input type="text" id="username-input" placeholder="Ton pseudo" maxlength="15">
         <button id="login-btn">Commencer</button>
     </div>
 
     <!-- Écran d'accueil -->
-    <div id="lobby-screen" class="screen hidden no-scroll">
+    <div id="lobby-screen" class="screen hidden">
         <div class="game-content">
             <h1>Bienvenue <span id="welcome-username" class="highlight"></span> !</h1>
             
@@ -37,15 +37,8 @@
             <button id="easy-btn" class="btn-small">Facile</button>
             <button id="medium-btn" class="btn-small">Moyen</button>
             <button id="hard-btn" class="btn-small">Difficile</button>
-        </div>
-    </div>
-
-    <!-- Écran de configuration -->
-    <div id="config-screen" class="screen hidden">
-        <div class="game-content">
-            <h1>Configuration</h1>
             
-            <div class="time-section">
+            <div class="time-section hidden" id="time-section">
                 <div class="symbol-title">Durée de la partie :</div>
                 <div class="time-options">
                     <button class="btn-time" data-time="2">2 min</button>
@@ -53,17 +46,6 @@
                     <button class="btn-time" data-time="10">10 min</button>
                 </div>
             </div>
-            
-            <div id="share-section" class="hidden">
-                <div class="symbol-title">Partager le lien :</div>
-                <div class="share-container">
-                    <input type="text" id="game-link" readonly>
-                    <button id="copy-link"><i class="fas fa-copy"></i></button>
-                </div>
-            </div>
-            
-            <button id="start-game-btn">Commencer la partie</button>
-            <button id="back-btn" class="btn-small">Retour</button>
         </div>
     </div>
 
@@ -74,23 +56,27 @@
             
             <div class="score-display">
                 <div class="score-item">
-                    <div>Victoires</div>
-                    <div class="score-value" id="player1-score">0</div>
+                    <div>Caillé</div>
+                    <div class="score-value" id="player-score">0</div>
                 </div>
                 <div class="score-item">
-                    <div>Victoires</div>
-                    <div class="score-value" id="player2-score">0</div>
+                    <div>Perdu</div>
+                    <div class="score-value" id="computer-score">0</div>
+                </div>
+                <div class="score-item">
+                    <div>Élu</div>
+                    <div class="score-value" id="abandon-score">0</div>
                 </div>
             </div>
             
             <div class="players-display">
                 <div id="player1-display" class="player-display player-x-display">
+                    <div>Vous (X)</div>
                     <div id="player1-name"></div>
-                    <div>(<span id="player1-symbol">X</span>)</div>
                 </div>
                 <div id="player2-display" class="player-display player-o-display">
+                    <div>Adversaire (O)</div>
                     <div id="player2-name"></div>
-                    <div>(<span id="player2-symbol">O</span>)</div>
                 </div>
             </div>
             
@@ -99,10 +85,30 @@
             <div id="game-board">
                 <!-- Cases générées par JavaScript -->
             </div>
+            
+            <div class="chat-container" id="chat-container">
+                <!-- Messages apparaîtront ici -->
+            </div>
+            
+            <div class="chat-input-container">
+                <input type="text" id="message-input" placeholder="Écrire un message...">
+                <button id="send-message"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            
+            <div class="sticker-picker">
+                <span class="sticker">😀</span>
+                <span class="sticker">😎</span>
+                <span class="sticker">🤩</span>
+                <span class="sticker">🎉</span>
+                <span class="sticker">❤️</span>
+                <span class="sticker">👍</span>
+                <span class="sticker">👎</span>
+                <span class="sticker">😂</span>
+            </div>
         </div>
         
         <div class="game-actions">
-            <button id="restart-btn">Nouveau jeu</button>
+            <button id="restart-btn">Recommencer</button>
             <button id="quit-btn">Quitter</button>
         </div>
     </div>
@@ -112,10 +118,16 @@
         <div class="result-content">
             <div id="result-title" class="result-title">Résultat</div>
             <div id="result-message">Message de résultat</div>
-            <button id="continue-btn" class="btn-small">Continuer</button>
-            <button id="final-result-btn" class="btn-small hidden">Terminer</button>
+            <button id="result-button" class="btn-small">OK</button>
         </div>
     </div>
+
+    <!-- Sons -->
+    <audio id="move-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3"></audio>
+    <audio id="win-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
+    <audio id="lose-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3"></audio>
+    <audio id="draw-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-neutral-game-notification-951.mp3"></audio>
+    <audio id="time-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3"></audio>
 
     <script src="app.js"></script>
 </body>

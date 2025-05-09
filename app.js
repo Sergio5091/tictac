@@ -1,7 +1,6 @@
 // Éléments DOM
 const loginScreen = document.getElementById('login-screen');
 const lobbyScreen = document.getElementById('lobby-screen');
-const configScreen = document.getElementById('config-screen');
 const gameScreen = document.getElementById('game-screen');
 const usernameInput = document.getElementById('username-input');
 const loginBtn = document.getElementById('login-btn');
@@ -11,29 +10,27 @@ const joinGameBtn = document.getElementById('join-game-btn');
 const easyBtn = document.getElementById('easy-btn');
 const mediumBtn = document.getElementById('medium-btn');
 const hardBtn = document.getElementById('hard-btn');
-const backBtn = document.getElementById('back-btn');
-const startGameBtn = document.getElementById('start-game-btn');
-const shareSection = document.getElementById('share-section');
-const gameLink = document.getElementById('game-link');
-const copyLink = document.getElementById('copy-link');
 const gameBoard = document.getElementById('game-board');
 const player1Display = document.getElementById('player1-name');
 const player2Display = document.getElementById('player2-name');
-const player1Symbol = document.getElementById('player1-symbol');
-const player2Symbol = document.getElementById('player2-symbol');
 const turnIndicator = document.getElementById('turn-indicator');
-const player1ScoreEl = document.getElementById('player1-score');
-const player2ScoreEl = document.getElementById('player2-score');
 const restartBtn = document.getElementById('restart-btn');
 const quitBtn = document.getElementById('quit-btn');
+const chatContainer = document.getElementById('chat-container');
+const messageInput = document.getElementById('message-input');
+const sendMessageBtn = document.getElementById('send-message');
+const stickers = document.querySelectorAll('.sticker');
+const symbolBtns = document.querySelectorAll('.symbol-btn');
+const timeSection = document.getElementById('time-section');
 const timeButtons = document.querySelectorAll('.btn-time');
 const timerDisplay = document.getElementById('timer-display');
+const playerScoreEl = document.getElementById('player-score');
+const computerScoreEl = document.getElementById('computer-score');
+const abandonScoreEl = document.getElementById('abandon-score');
 const resultOverlay = document.getElementById('result-overlay');
 const resultTitle = document.getElementById('result-title');
 const resultMessage = document.getElementById('result-message');
-const continueBtn = document.getElementById('continue-btn');
-const finalResultBtn = document.getElementById('final-result-btn');
-const symbolBtns = document.querySelectorAll('.symbol-btn');
+const resultButton = document.getElementById('result-button');
 
 // Variables du jeu
 let currentPlayer = 'X';
@@ -45,14 +42,13 @@ let isSoloGame = false;
 let difficulty = 'easy';
 let isPlayerTurn = true;
 let scores = {
-    player1: 0,
-    player2: 0
+    player: 0,
+    computer: 0,
+    abandon: 0
 };
-let totalTime = 300; // 5 minutes par défaut (en secondes)
-let timeRemaining;
+let gameTime = 300; // 5 minutes par défaut (en secondes)
 let timerInterval;
 let gameEndTime;
-let gameCount = 0;
 
 // Initialisation du jeu
 function initGame() {
@@ -69,14 +65,11 @@ function initGame() {
     isGameActive = true;
     currentPlayer = 'X';
     isPlayerTurn = playerSymbol === 'X';
-    gameCount++;
     
     // Configurer les noms des joueurs
     if (isSoloGame) {
         player1Display.textContent = playerName;
         player2Display.textContent = "Ordinateur";
-        player1Symbol.textContent = playerSymbol;
-        player2Symbol.textContent = playerSymbol === 'X' ? 'O' : 'X';
         turnIndicator.textContent = playerSymbol === 'X' ? "À votre tour !" : "L'ordinateur réfléchit...";
         
         if (playerSymbol === 'O') {
@@ -86,27 +79,34 @@ function initGame() {
     } else {
         player1Display.textContent = playerName;
         player2Display.textContent = 'Adversaire';
-        player1Symbol.textContent = 'X';
-        player2Symbol.textContent = 'O';
         turnIndicator.textContent = 'À toi de jouer !';
     }
     
-    updateScoresDisplay();
+    // Démarrer le timer
+    startTimer();
+    
+    // Réinitialiser le chat
+    chatContainer.innerHTML = '';
+    addSystemMessage("La partie a commencé !");
 }
 
-// Démarrer le timer global
-function startGlobalTimer() {
+// Démarrer le timer
+function startTimer() {
     clearInterval(timerInterval);
-    timeRemaining = totalTime;
-    gameEndTime = Date.now() + timeRemaining * 1000;
+    gameEndTime = Date.now() + gameTime * 1000;
     updateTimerDisplay();
     
     timerInterval = setInterval(() => {
-        timeRemaining = Math.max(0, Math.round((gameEndTime - Date.now()) / 1000));
+        const remaining = Math.max(0, Math.round((gameEndTime - Date.now()) / 1000));
         
-        if (timeRemaining <= 0) {
+        if (remaining <= 0) {
             clearInterval(timerInterval);
-            endMatch();
+            endGame('timeout');
+            showResult(
+                "Temps écoulé !", 
+                scores.player > scores.computer ? "Vous avez caillé !" : "Vous avez perdu...", 
+                scores.player > scores.computer ? "win-result" : "lose-result"
+            );
             return;
         }
         
@@ -116,14 +116,15 @@ function startGlobalTimer() {
 
 // Mettre à jour l'affichage du timer
 function updateTimerDisplay() {
-    const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
+    const remaining = Math.max(0, Math.round((gameEndTime - Date.now()) / 1000));
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
     timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
     // Changement de couleur quand il reste peu de temps
-    if (timeRemaining <= 30) {
+    if (remaining <= 30) {
         timerDisplay.style.color = '#FF5252';
-        if (timeRemaining <= 10) {
+        if (remaining <= 10) {
             timerDisplay.style.animation = 'pulse-win 0.5s infinite alternate';
         }
     } else {
@@ -295,35 +296,34 @@ function checkGameResult() {
         endGame('O', winningCells);
         if (isSoloGame) {
             if (playerSymbol === 'O') {
-                scores.player1++;
-                showGameResult("Victoire !", "Vous avez gagné ce jeu !", "win-result");
+                scores.player++;
+                showResult("Caillé !", "Vous avez gagné !", "win-result");
             } else {
-                scores.player2++;
-                showGameResult("Défaite", "L'ordinateur a gagné ce jeu", "lose-result");
+                scores.computer++;
+                showResult("Perdu...", "L'ordinateur a gagné", "lose-result");
             }
         } else {
-            scores.player2++;
-            showGameResult("Victoire !", "Joueur O a gagné ce jeu !", "win-result");
+            addSystemMessage("Joueur O a gagné !");
         }
     } else if (result === -10) {
         // X a gagné
         endGame('X', winningCells);
         if (isSoloGame) {
             if (playerSymbol === 'X') {
-                scores.player1++;
-                showGameResult("Victoire !", "Vous avez gagné ce jeu !", "win-result");
+                scores.player++;
+                showResult("Caillé !", "Vous avez gagné !", "win-result");
             } else {
-                scores.player2++;
-                showGameResult("Défaite", "L'ordinateur a gagné ce jeu", "lose-result");
+                scores.computer++;
+                showResult("Perdu...", "L'ordinateur a gagné", "lose-result");
             }
         } else {
-            scores.player1++;
-            showGameResult("Victoire !", "Joueur X a gagné ce jeu !", "win-result");
+            addSystemMessage("Joueur X a gagné !");
         }
     } else if (result === 0) {
         // Match nul
         endGame(null);
-        showGameResult("Égalité", "Match nul pour ce jeu", "draw-result");
+        scores.abandon++;
+        showResult("Élu", "Match nul !", "draw-result");
     } else {
         // Le jeu continue
         currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
@@ -341,69 +341,77 @@ function checkGameResult() {
 
 function endGame(winner, winningCells = []) {
     isGameActive = false;
+    clearInterval(timerInterval);
     
     // Mettre en évidence les cellules gagnantes
     winningCells.forEach(index => {
         const cell = document.querySelector(`.cell[data-index="${index}"]`);
         if (cell) cell.classList.add('winning-cell');
     });
-}
-
-function endMatch() {
-    let winner;
+    
     if (isSoloGame) {
-        if (scores.player1 > scores.player2) {
-            winner = "Vous avez gagné le match !";
-        } else if (scores.player2 > scores.player1) {
-            winner = "L'ordinateur a gagné le match !";
+        if (winner === playerSymbol) {
+            turnIndicator.textContent = "Vous avez caillé !";
+        } else if (winner) {
+            turnIndicator.textContent = "Vous avez perdu...";
         } else {
-            winner = "Match nul !";
+            turnIndicator.textContent = "Élu - Match nul !";
         }
     } else {
-        if (scores.player1 > scores.player2) {
-            winner = "Joueur X a gagné le match !";
-        } else if (scores.player2 > scores.player1) {
-            winner = "Joueur O a gagné le match !";
+        if (winner) {
+            turnIndicator.textContent = `Joueur ${winner} a gagné !`;
         } else {
-            winner = "Match nul !";
+            turnIndicator.textContent = "Match nul !";
         }
     }
+}
+
+// Afficher le résultat final
+function showResult(title, message, className) {
+    resultTitle.textContent = title;
+    resultTitle.className = `result-title ${className}`;
+    resultMessage.textContent = message;
+    resultOverlay.classList.remove('hidden');
+}
+
+// Gestion du chat
+function addMessage(sender, content, isSticker = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message');
     
-    showFinalResult(
-        "Match terminé !",
-        `${winner}<br>Score final: ${scores.player1} - ${scores.player2}`,
-        isSoloGame ? 
-            (scores.player1 > scores.player2 ? "win-result" : 
-             scores.player2 > scores.player1 ? "lose-result" : "draw-result") :
-            (scores.player1 > scores.player2 ? "win-result" : 
-             scores.player2 > scores.player1 ? "lose-result" : "draw-result")
-    );
+    const senderSpan = document.createElement('span');
+    senderSpan.classList.add('message-sender');
+    senderSpan.classList.add(sender === playerName ? 'sender-x' : 'sender-o');
+    senderSpan.textContent = sender + ": ";
+    
+    messageDiv.appendChild(senderSpan);
+    
+    if (isSticker) {
+        const stickerSpan = document.createElement('span');
+        stickerSpan.style.fontSize = '1.5rem';
+        stickerSpan.textContent = content;
+        messageDiv.appendChild(stickerSpan);
+    } else {
+        messageDiv.appendChild(document.createTextNode(content));
+    }
+    
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Afficher le résultat d'un jeu
-function showGameResult(title, message, className) {
-    resultTitle.textContent = title;
-    resultTitle.className = `result-title ${className}`;
-    resultMessage.innerHTML = message;
-    continueBtn.classList.remove('hidden');
-    finalResultBtn.classList.add('hidden');
-    resultOverlay.classList.remove('hidden');
-}
-
-// Afficher le résultat final du match
-function showFinalResult(title, message, className) {
-    resultTitle.textContent = title;
-    resultTitle.className = `result-title ${className}`;
-    resultMessage.innerHTML = message;
-    continueBtn.classList.add('hidden');
-    finalResultBtn.classList.remove('hidden');
-    resultOverlay.classList.remove('hidden');
+function addSystemMessage(content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', 'system-message');
+    messageDiv.textContent = content;
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 // Scores
 function updateScoresDisplay() {
-    player1ScoreEl.textContent = scores.player1;
-    player2ScoreEl.textContent = scores.player2;
+    playerScoreEl.textContent = scores.player;
+    computerScoreEl.textContent = scores.computer;
+    abandonScoreEl.textContent = scores.abandon;
 }
 
 // Gestion de la connexion
@@ -430,12 +438,14 @@ symbolBtns.forEach(btn => {
 
 // Boutons du lobby
 createGameBtn.addEventListener('click', () => {
+    player1Display.textContent = playerName;
+    player2Display.textContent = 'Adversaire';
     isSoloGame = false;
+    timeSection.classList.add('hidden');
+    
     lobbyScreen.classList.add('hidden');
-    configScreen.classList.remove('hidden');
-    shareSection.classList.remove('hidden');
-    // Générer un lien de partage (simulé)
-    gameLink.value = `${window.location.href}?game=12345`;
+    gameScreen.classList.remove('hidden');
+    initGame();
 });
 
 joinGameBtn.addEventListener('click', () => {
@@ -445,85 +455,90 @@ joinGameBtn.addEventListener('click', () => {
 // Boutons mode solo
 easyBtn.addEventListener('click', () => {
     difficulty = 'easy';
-    isSoloGame = true;
-    lobbyScreen.classList.add('hidden');
-    configScreen.classList.remove('hidden');
-    shareSection.classList.add('hidden');
+    timeSection.classList.remove('hidden');
 });
 
 mediumBtn.addEventListener('click', () => {
     difficulty = 'medium';
-    isSoloGame = true;
-    lobbyScreen.classList.add('hidden');
-    configScreen.classList.remove('hidden');
-    shareSection.classList.add('hidden');
+    timeSection.classList.remove('hidden');
 });
 
 hardBtn.addEventListener('click', () => {
     difficulty = 'hard';
-    isSoloGame = true;
-    lobbyScreen.classList.add('hidden');
-    configScreen.classList.remove('hidden');
-    shareSection.classList.add('hidden');
-});
-
-// Bouton retour
-backBtn.addEventListener('click', () => {
-    configScreen.classList.add('hidden');
-    lobbyScreen.classList.remove('hidden');
-});
-
-// Copier le lien
-copyLink.addEventListener('click', () => {
-    gameLink.select();
-    document.execCommand('copy');
-    alert('Lien copié dans le presse-papier !');
+    timeSection.classList.remove('hidden');
 });
 
 // Sélection du temps
 timeButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-        totalTime = parseInt(btn.dataset.time) * 60;
-        startGameBtn.textContent = `Commencer (${btn.dataset.time} min)`;
+        gameTime = parseInt(btn.dataset.time) * 60;
+        startSoloGame();
     });
 });
 
-// Démarrer la partie
-startGameBtn.addEventListener('click', () => {
-    configScreen.classList.add('hidden');
+function startSoloGame() {
+    isSoloGame = true;
+    
+    lobbyScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
-    
-    // Réinitialiser les scores
-    scores = {
-        player1: 0,
-        player2: 0
-    };
-    gameCount = 0;
-    
-    startGlobalTimer();
     initGame();
-});
+}
 
 // Boutons du jeu
-restartBtn.addEventListener('click', () => {
-    initGame();
-});
-
+restartBtn.addEventListener('click', initGame);
 quitBtn.addEventListener('click', () => {
     clearInterval(timerInterval);
-    gameScreen.classList.add('hidden');
-    lobbyScreen.classList.remove('hidden');
+    scores.abandon++;
+    updateScoresDisplay();
+    showResult("Élu", "Vous avez quitté la partie", "draw-result");
 });
 
-// Bouton continuer
-continueBtn.addEventListener('click', () => {
-    resultOverlay.classList.add('hidden');
-    initGame();
+// Gestion du chat
+sendMessageBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
 });
 
-// Bouton résultat final
-finalResultBtn.addEventListener('click', () => {
+function sendMessage() {
+    const message = messageInput.value.trim();
+    if (message) {
+        addMessage(playerName, message);
+        messageInput.value = '';
+        
+        if (isSoloGame) {
+            // Réponse automatique de l'ordinateur
+            setTimeout(() => {
+                const responses = [
+                    "Bien joué !",
+                    "Hmm... intéressant",
+                    "Tu es fort !",
+                    "Je vais gagner !",
+                    "Essaie encore !"
+                ];
+                addMessage("Ordinateur", responses[Math.floor(Math.random() * responses.length)]);
+            }, 1000);
+        }
+    }
+}
+
+// Gestion des stickers
+stickers.forEach(sticker => {
+    sticker.addEventListener('click', () => {
+        addMessage(playerName, sticker.textContent, true);
+        
+        if (isSoloGame) {
+            setTimeout(() => {
+                const stickerResponses = ["😎", "👍", "🤔", "👏", "🎯"];
+                addMessage("Ordinateur", stickerResponses[Math.floor(Math.random() * stickerResponses.length)], true);
+            }, 800);
+        }
+    });
+});
+
+// Bouton résultat
+resultButton.addEventListener('click', () => {
     resultOverlay.classList.add('hidden');
-    gameScreen.classList.add('hidden');
-    lobbyScreen.classList.remove('hidden');
+    if (!isGameActive) {
+        initGame();
+    }
 });
